@@ -1,0 +1,233 @@
+{% extends "base.html" %}
+
+{% block title %}Monthly Fixed Costs — M2M Planner{% endblock %}
+{% block nav_fixed_costs %}active{% endblock %}
+
+{% block extra_css %}
+    h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: .25rem; }
+    .subtitle { color: #94a3b8; font-size: .9rem; margin-bottom: 2rem; }
+
+    .income-section { margin-bottom: 1.5rem; }
+    .income-section label {
+      display: block;
+      font-size: .85rem;
+      color: #94a3b8;
+      margin-bottom: .4rem;
+    }
+
+    input[type="number"], input[type="text"] {
+      width: 100%;
+      padding: .65rem .9rem;
+      border: 1px solid #475569;
+      border-radius: .5rem;
+      background: #0f172a;
+      color: #f1f5f9;
+      font-size: 1rem;
+      outline: none;
+      transition: border-color .2s;
+    }
+    input:focus { border-color: #38bdf8; }
+    input::placeholder { color: #64748b; }
+
+    .deductions-section { margin-top: 1.5rem; }
+    .deductions-section h2 {
+      font-size: .95rem;
+      font-weight: 600;
+      margin-bottom: .75rem;
+    }
+
+    .deduction-row {
+      display: flex;
+      gap: .5rem;
+      margin-bottom: .4rem;
+      align-items: center;
+    }
+    .deduction-row input[type="text"] {
+      flex: 1.2;
+      padding: .5rem .7rem;
+      font-size: .9rem;
+    }
+    .deduction-row input[type="number"] {
+      flex: 1;
+      padding: .5rem .7rem;
+      font-size: .9rem;
+    }
+
+    .btn-remove {
+      width: 2rem;
+      height: 2rem;
+      border: 1px solid #475569;
+      border-radius: .375rem;
+      background: transparent;
+      color: #f87171;
+      font-size: 1.1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: all .15s;
+    }
+    .btn-remove:hover {
+      background: rgba(248, 113, 113, .1);
+      border-color: #f87171;
+    }
+
+    .btn-add {
+      display: inline-flex;
+      align-items: center;
+      gap: .35rem;
+      margin-top: .5rem;
+      padding: .45rem .85rem;
+      border: 1px dashed #475569;
+      border-radius: .5rem;
+      background: transparent;
+      color: #94a3b8;
+      font-size: .85rem;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .btn-add:hover {
+      border-color: #38bdf8;
+      color: #38bdf8;
+    }
+
+    .divider {
+      border: none;
+      border-top: 1px solid #334155;
+      margin: 1.5rem 0;
+    }
+
+    .summary {
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: .75rem;
+      padding: 1.25rem;
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      padding: .4rem 0;
+      font-size: .9rem;
+    }
+    .summary-row .label { color: #94a3b8; }
+    .summary-row .value { font-weight: 600; }
+    .summary-row.total {
+      border-top: 1px solid #334155;
+      margin-top: .5rem;
+      padding-top: .75rem;
+    }
+    .summary-row.total .value {
+      font-size: 1.25rem;
+      font-weight: 800;
+    }
+    .positive { color: #34d399; }
+    .negative { color: #f87171; }
+    .zero { color: #94a3b8; }
+{% endblock %}
+
+{% block content %}
+  <div class="card">
+    <h1>Monthly Fixed Costs</h1>
+    <p class="subtitle">Calculate what's left after fixed expenses</p>
+
+    <div class="income-section">
+      <label for="income">Monthly Income (gross)</label>
+      <input type="number" id="income" step="any" min="0" placeholder="e.g. 50000" autofocus>
+    </div>
+
+    <div class="deductions-section">
+      <h2>Deductions &amp; Fixed Costs</h2>
+      <div id="deduction-list">
+        {% for d in default_deductions %}
+          <div class="deduction-row">
+            <input type="text" placeholder="Name" value="{{ d.name }}">
+            <input type="number" step="any" min="0" placeholder="Amount">
+            <button class="btn-remove" title="Remove">&times;</button>
+          </div>
+        {% endfor %}
+      </div>
+      <button class="btn-add" id="btn-add">+ Add item</button>
+    </div>
+
+    <hr class="divider">
+
+    <div class="summary">
+      <div class="summary-row">
+        <span class="label">Income</span>
+        <span class="value" id="sum-income">0</span>
+      </div>
+      <div class="summary-row">
+        <span class="label">Total deductions</span>
+        <span class="value negative" id="sum-deductions">0</span>
+      </div>
+      <div class="summary-row total">
+        <span class="label">Remaining</span>
+        <span class="value" id="sum-remaining">0</span>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block extra_js %}
+  <script>
+    const list = document.getElementById("deduction-list");
+
+    function makeRow(name = "", amount = "") {
+      const row = document.createElement("div");
+      row.className = "deduction-row";
+      row.innerHTML =
+        '<input type="text" placeholder="Name" value="' + name + '">' +
+        '<input type="number" step="any" min="0" placeholder="Amount" value="' + amount + '">' +
+        '<button class="btn-remove" title="Remove">&times;</button>';
+      row.querySelector(".btn-remove").addEventListener("click", () => {
+        row.remove();
+        recalc();
+      });
+      row.querySelectorAll("input").forEach(i => i.addEventListener("input", recalc));
+      return row;
+    }
+
+    function initRows() {
+      list.querySelectorAll(".deduction-row").forEach(row => {
+        row.querySelector(".btn-remove").addEventListener("click", () => {
+          row.remove();
+          recalc();
+        });
+        row.querySelectorAll("input").forEach(i => i.addEventListener("input", recalc));
+      });
+    }
+
+    function fmt(n) {
+      return n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function recalc() {
+      const income = parseFloat(document.getElementById("income").value) || 0;
+      let totalDeductions = 0;
+
+      list.querySelectorAll(".deduction-row").forEach(row => {
+        const amt = parseFloat(row.querySelector('input[type="number"]').value) || 0;
+        totalDeductions += amt;
+      });
+
+      const remaining = income - totalDeductions;
+
+      document.getElementById("sum-income").textContent = fmt(income);
+      document.getElementById("sum-deductions").textContent = "-" + fmt(totalDeductions);
+
+      const remEl = document.getElementById("sum-remaining");
+      remEl.textContent = fmt(remaining);
+      remEl.className = "value " + (remaining > 0 ? "positive" : remaining < 0 ? "negative" : "zero");
+    }
+
+    document.getElementById("income").addEventListener("input", recalc);
+    document.getElementById("btn-add").addEventListener("click", () => {
+      list.appendChild(makeRow());
+    });
+
+    initRows();
+    recalc();
+  </script>
+{% endblock %}

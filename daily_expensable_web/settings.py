@@ -27,6 +27,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'core',
     'calculator',
+    'fixed_costs',
 ]
 
 MIDDLEWARE = [

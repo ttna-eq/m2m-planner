@@ -6,7 +6,12 @@ FEATURES = [
         "description": "Calculate how much you can spend per day until payday. "
                        "Visualise your month, exclude pre-budgeted days, and pick your payday strategy.",
         "url_name": "daily_expensable",
-        "icon": "wallet",
+    },
+    {
+        "name": "Monthly Fixed Costs",
+        "description": "Enter your income and fixed expenses — tax, social security, rent, "
+                       "subscriptions — and see what's left each month.",
+        "url_name": "fixed_costs",
     },
 ]
 
