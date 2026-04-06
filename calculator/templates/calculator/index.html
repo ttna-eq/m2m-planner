@@ -1,0 +1,435 @@
+{% extends "base.html" %}
+
+{% block title %}Daily Expensable — M2M Planner{% endblock %}
+{% block nav_expensable %}active{% endblock %}
+
+{% block extra_css %}
+    h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: .25rem; }
+    .subtitle { color: #94a3b8; font-size: .9rem; margin-bottom: 2rem; }
+
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      padding: .65rem 0;
+      border-bottom: 1px solid #334155;
+      font-size: .95rem;
+    }
+    .info-row .label { color: #94a3b8; }
+    .info-row .value { font-weight: 600; }
+    .highlight { color: #38bdf8; }
+
+    .reached-badge {
+      display: inline-block;
+      background: #065f46;
+      color: #6ee7b7;
+      font-size: .8rem;
+      font-weight: 600;
+      padding: .25rem .75rem;
+      border-radius: 999px;
+      margin-top: 1.25rem;
+    }
+
+    .money-section { margin-top: 1.75rem; }
+    .money-section label {
+      display: block;
+      font-size: .85rem;
+      color: #94a3b8;
+      margin-bottom: .4rem;
+    }
+    .input-group { display: flex; gap: .5rem; }
+
+    input[type="number"] {
+      flex: 1;
+      padding: .65rem .9rem;
+      border: 1px solid #475569;
+      border-radius: .5rem;
+      background: #0f172a;
+      color: #f1f5f9;
+      font-size: 1rem;
+      outline: none;
+      transition: border-color .2s;
+    }
+    input[type="number"]:focus { border-color: #38bdf8; }
+    input[type="number"]::placeholder { color: #64748b; }
+
+    .strategy-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: .65rem 0;
+      border-bottom: 1px solid #334155;
+      font-size: .95rem;
+    }
+    .strategy-row .label { color: #94a3b8; }
+
+    select {
+      padding: .4rem .6rem;
+      border: 1px solid #475569;
+      border-radius: .4rem;
+      background: #0f172a;
+      color: #f1f5f9;
+      font-size: .85rem;
+      outline: none;
+      cursor: pointer;
+      transition: border-color .2s;
+    }
+    select:focus { border-color: #38bdf8; }
+
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      margin-top: .75rem;
+    }
+    .checkbox-row input[type="checkbox"] {
+      width: 1rem;
+      height: 1rem;
+      accent-color: #059669;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .checkbox-row label {
+      font-size: .85rem;
+      color: #94a3b8;
+      cursor: pointer;
+    }
+
+    .calendar-section { margin-top: 1.5rem; }
+    .calendar-section h2 {
+      font-size: .85rem;
+      color: #94a3b8;
+      margin-bottom: .6rem;
+      font-weight: 500;
+    }
+
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: .3rem;
+    }
+
+    .cal-header {
+      text-align: center;
+      font-size: .7rem;
+      color: #64748b;
+      font-weight: 600;
+      padding: .3rem 0;
+    }
+
+    .cal-day {
+      text-align: center;
+      padding: .45rem .2rem;
+      border-radius: .5rem;
+      font-size: .85rem;
+      font-weight: 500;
+      border: 1px solid transparent;
+      transition: all .15s;
+      user-select: none;
+    }
+
+    .cal-day.past {
+      color: #475569;
+      text-decoration: line-through;
+      cursor: default;
+    }
+    .cal-day.payday {
+      background: #065f46;
+      border-color: #059669;
+      color: #6ee7b7;
+      cursor: default;
+      font-weight: 700;
+    }
+    .cal-day.after {
+      color: #334155;
+      cursor: default;
+    }
+    .cal-day.budget {
+      background: #1e3a5f;
+      border-color: #2563eb;
+      color: #93c5fd;
+      cursor: pointer;
+    }
+    .cal-day.budget:hover {
+      border-color: #38bdf8;
+      background: #1e40af;
+    }
+    .cal-day.budget.excluded {
+      background: #1e293b;
+      border-color: #334155;
+      color: #475569;
+      text-decoration: line-through;
+    }
+    .cal-day.budget.excluded:hover {
+      border-color: #475569;
+      background: #253349;
+    }
+
+    .cal-spacer { visibility: hidden; }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .75rem;
+      margin-top: .75rem;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: .3rem;
+      font-size: .7rem;
+      color: #94a3b8;
+    }
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+    .legend-dot.past { background: #475569; }
+    .legend-dot.budget { background: #2563eb; }
+    .legend-dot.excluded-dot { background: #334155; border: 1px solid #475569; }
+    .legend-dot.payday-dot { background: #059669; }
+    .legend-dot.after { background: #1e293b; border: 1px solid #334155; }
+
+    .result {
+      margin-top: 1.5rem;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: .75rem;
+      padding: 1.25rem;
+      text-align: center;
+      transition: opacity .2s;
+    }
+    .result .amount {
+      font-size: 2rem;
+      font-weight: 800;
+      color: #34d399;
+    }
+    .result .caption {
+      color: #94a3b8;
+      font-size: .85rem;
+      margin-top: .25rem;
+    }
+    .result.hidden { display: none; }
+
+    .stats {
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+      margin-top: .75rem;
+    }
+    .stat { text-align: center; }
+    .stat .stat-value {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #38bdf8;
+    }
+    .stat .stat-label {
+      font-size: .7rem;
+      color: #64748b;
+      margin-top: .1rem;
+    }
+{% endblock %}
+
+{% block content %}
+  <div class="card">
+    <h1>Daily Expensable</h1>
+    <p class="subtitle">{{ month_label }}</p>
+
+    <div class="strategy-row">
+      <span class="label">Payday strategy</span>
+      <select id="strategy-select">
+        {% for s in strategies %}
+          <option value="{{ s.key }}" {% if s.key == strategy_key %}selected{% endif %}>
+            {{ s.label }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="info-row">
+      <span class="label">Payday</span>
+      <span class="value">{{ payday_formatted }}</span>
+    </div>
+
+    {% if payday_reached %}
+      <span class="reached-badge">Payday is here or has passed</span>
+    {% else %}
+      <div class="info-row" id="days-row">
+        <span class="label">Days to budget</span>
+        <span class="value highlight" id="days-count">{{ days_left }}</span>
+      </div>
+
+      <div class="money-section">
+        <label for="money_left">Money left until payday</label>
+        <div class="input-group">
+          <input
+            type="number"
+            id="money_left"
+            step="any"
+            min="0"
+            placeholder="e.g. 5000"
+            autofocus
+          >
+        </div>
+      </div>
+
+      <div class="checkbox-row">
+        <input type="checkbox" id="include_payday">
+        <label for="include_payday">Include payday in budget</label>
+      </div>
+
+      <div class="calendar-section">
+        <h2>Click a day to exclude it from your budget</h2>
+        <div class="calendar-grid" id="calendar"></div>
+        <div class="legend">
+          <div class="legend-item"><span class="legend-dot past"></span> Past</div>
+          <div class="legend-item"><span class="legend-dot budget"></span> Budget day</div>
+          <div class="legend-item"><span class="legend-dot excluded-dot"></span> Excluded</div>
+          <div class="legend-item"><span class="legend-dot payday-dot"></span> Payday</div>
+          <div class="legend-item"><span class="legend-dot after"></span> After payday</div>
+        </div>
+      </div>
+
+      <div class="result hidden" id="result">
+        <div class="amount" id="per-day">0.00</div>
+        <div class="caption" id="result-caption"></div>
+        <div class="stats">
+          <div class="stat">
+            <div class="stat-value" id="stat-active">0</div>
+            <div class="stat-label">active days</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value" id="stat-excluded">0</div>
+            <div class="stat-label">excluded</div>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+{% endblock %}
+
+{% block extra_js %}
+  {% if not payday_reached %}
+  <script>
+    const ALL_DAYS = {{ all_days_json|safe }};
+    const BUDGET_DATES = new Set({{ budget_dates_json|safe }});
+    const FIRST_WEEKDAY = {{ first_weekday }};
+    const HEADERS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+    const excluded = new Set();
+    let paydayEl = null;
+    let paydayIso = null;
+    let paydayIncluded = false;
+
+    function buildCalendar() {
+      const grid = document.getElementById("calendar");
+
+      HEADERS.forEach(w => {
+        const hdr = document.createElement("div");
+        hdr.className = "cal-header";
+        hdr.textContent = w;
+        grid.appendChild(hdr);
+      });
+
+      for (let i = 0; i < FIRST_WEEKDAY; i++) {
+        const spacer = document.createElement("div");
+        spacer.className = "cal-spacer";
+        grid.appendChild(spacer);
+      }
+
+      ALL_DAYS.forEach(info => {
+        const el = document.createElement("div");
+        el.className = "cal-day " + info.status;
+        el.textContent = info.day;
+        el.dataset.date = info.iso;
+
+        if (info.status === "budget" || info.status === "payday") {
+          el.addEventListener("click", () => {
+            if (info.status === "payday" && !paydayIncluded) return;
+            if (excluded.has(info.iso)) {
+              excluded.delete(info.iso);
+              el.classList.remove("excluded");
+              if (info.status === "payday") el.classList.add("budget");
+            } else {
+              excluded.add(info.iso);
+              el.classList.add("excluded");
+            }
+            recalc();
+          });
+        }
+
+        if (info.status === "payday") {
+          paydayEl = el;
+          paydayIso = info.iso;
+        }
+
+        grid.appendChild(el);
+      });
+    }
+
+    function togglePayday(include) {
+      paydayIncluded = include;
+      if (!paydayEl) return;
+
+      if (include) {
+        paydayEl.classList.remove("payday");
+        if (excluded.has(paydayIso)) {
+          paydayEl.className = "cal-day budget excluded";
+        } else {
+          paydayEl.className = "cal-day budget";
+        }
+        paydayEl.style.cursor = "pointer";
+      } else {
+        excluded.delete(paydayIso);
+        paydayEl.className = "cal-day payday";
+        paydayEl.style.cursor = "default";
+      }
+      recalc();
+    }
+
+    function recalc() {
+      const baseBudget = BUDGET_DATES.size + (paydayIncluded ? 1 : 0);
+      const activeDays = baseBudget - excluded.size;
+      const moneyInput = document.getElementById("money_left");
+      const money = parseFloat(moneyInput.value);
+
+      document.getElementById("days-count").textContent =
+        activeDays + " of " + baseBudget + " day" + (baseBudget !== 1 ? "s" : "");
+      document.getElementById("stat-active").textContent = activeDays;
+      document.getElementById("stat-excluded").textContent = excluded.size;
+
+      const resultEl = document.getElementById("result");
+
+      if (!money || money <= 0 || activeDays <= 0) {
+        resultEl.classList.add("hidden");
+        return;
+      }
+
+      const perDay = money / activeDays;
+      document.getElementById("per-day").textContent = perDay.toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
+      document.getElementById("result-caption").textContent =
+        "per day for " + activeDays + " day" + (activeDays !== 1 ? "s" : "");
+      resultEl.classList.remove("hidden");
+    }
+
+    document.getElementById("money_left").addEventListener("input", recalc);
+    document.getElementById("include_payday").addEventListener("change", e => {
+      togglePayday(e.target.checked);
+    });
+
+    buildCalendar();
+    recalc();
+  </script>
+  {% endif %}
+
+  <script>
+    document.getElementById("strategy-select").addEventListener("change", e => {
+      const url = new URL(window.location);
+      url.searchParams.set("strategy", e.target.value);
+      window.location.href = url.toString();
+    });
+  </script>
+{% endblock %}

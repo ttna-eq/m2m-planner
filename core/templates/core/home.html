@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}M2M Planner{% endblock %}
+{% block nav_home %}active{% endblock %}
+
+{% block extra_css %}
+    .home-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .home-header h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      margin-bottom: .5rem;
+    }
+    .home-header h1 span { color: #38bdf8; }
+    .home-header p {
+      color: #94a3b8;
+      font-size: .95rem;
+    }
+
+    .feature-grid {
+      display: grid;
+      gap: 1rem;
+    }
+
+    .feature-card {
+      display: block;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: .75rem;
+      padding: 1.5rem;
+      text-decoration: none;
+      color: inherit;
+      transition: all .15s;
+    }
+    .feature-card:hover {
+      border-color: #38bdf8;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, .3);
+    }
+
+    .feature-card h2 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: .35rem;
+      color: #f1f5f9;
+    }
+    .feature-card p {
+      font-size: .85rem;
+      color: #94a3b8;
+      line-height: 1.5;
+    }
+
+    .feature-card .arrow {
+      display: inline-block;
+      margin-top: .75rem;
+      font-size: .8rem;
+      color: #38bdf8;
+      font-weight: 600;
+    }
+
+    .coming-soon {
+      text-align: center;
+      margin-top: 1.5rem;
+      color: #475569;
+      font-size: .8rem;
+    }
+{% endblock %}
+
+{% block content %}
+  <div class="card">
+    <div class="home-header">
+      <h1>M2M <span>Planner</span></h1>
+      <p>Your month-to-month planning toolkit</p>
+    </div>
+
+    <div class="feature-grid">
+      {% for f in features %}
+        <a class="feature-card" href="{% url f.url_name %}">
+          <h2>{{ f.name }}</h2>
+          <p>{{ f.description }}</p>
+          <span class="arrow">Open &rarr;</span>
+        </a>
+      {% endfor %}
+    </div>
+
+    <p class="coming-soon">More features coming soon</p>
+  </div>
+{% endblock %}
